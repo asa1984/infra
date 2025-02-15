@@ -13,10 +13,10 @@ let
 in
 {
   perSystem =
-    { pkgs, ... }:
+    { pkgs, self', ... }:
     {
       devShells.terraform = pkgs.mkShellNoCC {
-        packages = [
+        buildInputs = [
           (pkgs.opentofu.withPlugins (
             p:
             builtins.map convert2Tofu [
@@ -25,6 +25,13 @@ in
               p.vultr
             ]
           ))
+        ];
+      };
+      packages.terraform-ci = pkgs.buildEnv {
+        name = "terraform-ci";
+        paths = self'.devShells.terraform.buildInputs ++ [
+          pkgs.jq
+          self'.packages.tfcmt
         ];
       };
     };

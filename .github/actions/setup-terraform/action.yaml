@@ -1,0 +1,49 @@
+name: Setup Terraform
+description: Setup all Terraform variables and initialize Terraform
+
+inputs:
+  secrets-json:
+    description: "JSON string containing all secrets"
+    required: true
+  tfstate-endpoint:
+    description: "S3 endpoint for tfstate"
+    required: true
+  tfstate-access-key:
+    description: "S3 access key for tfstate"
+    required: true
+  tfstate-secret-key:
+    description: "S3 secret key for tfstate"
+    required: true
+  working-directory:
+    description: "Working directory for Terraform"
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Export all Terraform variables
+      shell: bash
+      run: |
+        set -euo pipefail        
+        keys=$(echo '${{ inputs.secrets-json }}' | jq -r 'keys[] | select(test("^TF_VAR_"))')
+        for key in $keys; do
+          value=$(echo '${{ inputs.secrets-json }}' | jq -r --arg key "$key" '.[$key]')
+          suffix=${key#TF_VAR_}
+          lower_suffix=$(echo "$suffix" | tr '[:upper:]' '[:lower:]')
+          new_key="TF_VAR_$lower_suffix"
+          echo "Setting $new_key"
+          echo "$new_key<<EOF_SECRET" >>"$GITHUB_ENV"
+          echo "$value" >>"$GITHUB_ENV"
+          echo "EOF_SECRET" >>"$GITHUB_ENV"
+        done
+
+    - name: Terraform init
+      shell: bash
+      run: |
+        set -euo pipefail
+        rm -f .terraform.lock.hcl
+        tofu init \
+          -backend-config="endpoints={s3 = \"${{ inputs.tfstate-endpoint }}\"}" \
+          -backend-config="access_key=${{ inputs.tfstate-access-key }}" \
+          -backend-config="secret_key=${{ inputs.tfstate-secret-key }}"
+      working-directory: ${{ inputs.working-directory }}
