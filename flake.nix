@@ -13,6 +13,9 @@
         "x86_64-darwin"
         "x86_64-linux"
       ];
-      imports = [ ./terraform/flake-module.nix ];
+      imports = [
+        ./pkgs/flake-module.nix
+        ./terraform/flake-module.nix
+      ];
     };
 }

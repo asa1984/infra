@@ -1,0 +1,32 @@
+name: CI
+on:
+  pull_request:
+
+jobs:
+  terraform:
+    name: Terraform plan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: DeterminateSystems/nix-installer-action@main
+      - name: Install requirements
+        run: nix profile install .#terraform
+
+      - name: Terraform format
+        run: tofu fmt -check
+        working-directory: "./terraform"
+
+      - name: Terraform init
+        run: tofu init
+        working-directory: "./terraform"
+
+      - name: Validate .tf files
+        run: tofu validate
+        working-directory: "./terraform"
+
+      - id: terraform-plan
+        name: Plan infrastructure
+        run: tofu plan
+        working-directory: "./terraform"
+
+      # - name: Comment plan result to PR
