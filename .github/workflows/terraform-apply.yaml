@@ -1,0 +1,33 @@
+name: Terraform apply
+on:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
+jobs:
+  apply:
+    name: Terraform apply
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: DeterminateSystems/nix-installer-action@main
+      - name: Install requirements
+        run: nix profile install .#terraform-ci
+
+      - name: Setup Terraform
+        uses: ./.github/actions/setup-terraform
+        with:
+          secrets-json: ${{ toJson(secrets) }}
+          tfstate-endpoint: ${{ secrets.TF_STATE_ENDPOINT }}
+          tfstate-access-key: ${{ secrets.TF_STATE_ACCESS_KEY }}
+          tfstate-secret-key: ${{ secrets.TF_STATE_SECRET_KEY }}
+          working-directory: ./terraform
+
+      - name: Terraform apply
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: tfcmt apply -- tofu apply -no-color -input=false -auto-approve
+        working-directory: "./terraform"
