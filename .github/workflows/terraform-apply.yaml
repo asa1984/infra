@@ -13,6 +13,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: DeterminateSystems/nix-installer-action@main
+
+      - name: Restore binary cache
+        uses: ./.github/actions/binary-cache
+        with:
+          package: .#terraform-ci
+
       - name: Install requirements
         run: nix profile install .#terraform-ci
 
