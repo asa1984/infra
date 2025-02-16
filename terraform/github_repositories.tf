@@ -1,5 +1,14 @@
 # asa1984/infra
 
+locals {
+  # Repository roleとactor_idの対応
+  repository_role = {
+    maintain = 2
+    write    = 4
+    admin    = 5
+  }
+}
+
 data "github_repository" "infra" {
   full_name = "asa1984/infra"
 }
@@ -17,16 +26,18 @@ resource "github_repository_ruleset" "infra_main" {
     }
   }
 
+  bypass_actors {
+    actor_id    = local.repository_role.admin
+    actor_type  = "RepositoryRole"
+    bypass_mode = "always"
+  }
+
   rules {
     deletion = false
 
-    pull_request {
-      required_approving_review_count = 1
-    }
-
     required_status_checks {
       required_check {
-        context = "ci"
+        context = "terraform-plan"
       }
     }
   }

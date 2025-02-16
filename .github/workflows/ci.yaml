@@ -8,8 +8,7 @@ permissions:
   pull-requests: write
 
 jobs:
-  terraform:
-    name: Terraform plan
+  terraform-plan:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
