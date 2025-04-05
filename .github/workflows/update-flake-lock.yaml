@@ -8,6 +8,12 @@ jobs:
   lockfile:
     runs-on: ubuntu-latest
     steps:
+      - id: generate-github-token
+        name: Generate GitHub token
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ secrets.SWAMPMAN_GITHUB_APP_ID }}
+          private-key: ${{ secrets.SWAMPMAN_GITHUB_APP_PRIVATE_KEY }}
       - name: Checkout repository
         uses: actions/checkout@v4
       - name: Install Nix
@@ -18,8 +24,9 @@ jobs:
         with:
           commit-msg: "chore(deps): update flake.lock"
           pr-title: "chore(deps): update flake.lock"
+          token: ${{ steps.generate-github-token.outputs.token }}
       - name: Enable PR auto-merge
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ steps.generate-github-token.outputs.token }}
         run: |
           gh pr merge --auto --merge ${{ steps.update.outputs.pull-request-number }}
